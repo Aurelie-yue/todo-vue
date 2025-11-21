@@ -1,0 +1,223 @@
+<template>
+  <div class="todo-wrap" role="application" aria-label="本周待办事项">
+    <h1 class="title">本周待办事项</h1>
+
+    <ul class="list" aria-live="polite">
+      <li v-for="(todo, index) in todos" :key="todo.id" class="list-item">
+        <div class="item-text">{{ todo.text }}</div>
+        <button class="btn-delete" @click="remove(index)" :aria-label="'删除 ' + todo.text">删除</button>
+      </li>
+
+      <li v-if="todos.length === 0" class="list-item empty">
+        暂无待办事项
+      </li>
+    </ul>
+
+    <div class="input-row">
+      <input
+        v-model="inputText"
+        @keyup.enter="add"
+        class="todo-input"
+        type="text"
+        placeholder="请输入待办事项..."
+        aria-label="输入待办事项"
+      />
+      <button class="btn-add" @click="add" :disabled="!canAdd" aria-label="添加待办">
+        添加
+      </button>
+    </div>
+
+    <div class="clear-row">
+      <button class="btn-clear" @click="clearAll" :disabled="todos.length === 0" aria-label="清空所有待办">
+        清空所有
+      </button>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+
+const STORAGE_KEY = 'vue-todos'
+
+const inputText = ref('')
+const todos = ref([])
+
+const canAdd = computed(() => inputText.value.trim().length > 0)
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (raw) {
+      todos.value = JSON.parse(raw)
+    } else {
+      // 初始示例数据
+      todos.value = [
+        { id: 't1', text: '去图书馆学习' },
+        { id: 't2', text: '上羽毛球课' },
+        { id: 't3', text: '会议室开会' }
+      ]
+    }
+  } catch (e) {
+    todos.value = []
+  }
+}
+
+function save() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(todos.value))
+  } catch (e) {
+    // ignore
+  }
+}
+
+function add() {
+  const text = inputText.value.trim()
+  if (!text) return
+  todos.value.push({
+    id: Date.now() + Math.random().toString(16).slice(2),
+    text
+  })
+  inputText.value = ''
+  save()
+  setTimeout(() => {
+    const el = document.querySelector('.todo-input')
+    if (el) el.focus()
+  })
+}
+
+function remove(index) {
+  if (index < 0 || index >= todos.value.length) return
+  todos.value.splice(index, 1)
+  save()
+}
+
+function clearAll() {
+  if (!confirm('确定要清空所有待办事项吗？')) return
+  todos.value = []
+  save()
+}
+
+onMounted(() => {
+  load()
+})
+</script>
+
+<style scoped>
+.todo-wrap {
+  width: 720px;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 0 0 6px rgba(0,0,0,0.03);
+  padding: 36px 48px 48px;
+}
+
+.title {
+  text-align: center;
+  font-size: 34px;
+  font-weight: 700;
+  margin: 0 0 24px;
+  color: #333;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fafafa;
+  border-radius: 6px;
+  padding: 18px 18px;
+  margin-bottom: 12px;
+  border: 1px solid rgba(0,0,0,0.03);
+  box-shadow: inset 0 -1px 0 rgba(0,0,0,0.02);
+  font-size: 18px;
+}
+
+.item-text {
+  flex: 1;
+  margin-right: 12px;
+  word-break: break-word;
+}
+
+.btn-delete {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.btn-delete:hover { opacity: 0.92; }
+
+.input-row {
+  display: flex;
+  margin-top: 10px;
+  gap: 12px;
+}
+
+.todo-input {
+  flex: 1;
+  padding: 14px 12px;
+  border-radius: 8px;
+  border: 2px solid #c8d7ff;
+  outline: none;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+.todo-input:focus {
+  border-color: #2b6cff;
+  box-shadow: 0 0 0 4px rgba(43,108,255,0.12);
+}
+
+.btn-add {
+  background: #1976d2;
+  color: white;
+  border: none;
+  padding: 0 18px;
+  border-radius: 8px;
+  min-width: 86px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+}
+.btn-add:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.clear-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+.btn-clear {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.btn-clear:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.empty {
+  justify-content: center;
+  color: #888;
+}
+
+@media (max-width: 760px) {
+  .todo-wrap { width: 100%; padding: 24px; }
+  .title { font-size: 26px; }
+}
+</style>

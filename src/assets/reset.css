@@ -1,0 +1,3 @@
+/* 简单重置 & 全局字体（可根据需要替换） */
+* { box-sizing: border-box; }
+html,body,#app { height: 100%; margin:0; font-family: "Helvetica Neue", Arial, sans-serif; color:#333; }
